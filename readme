@@ -1,0 +1,32 @@
+|---------------------------------|
+| Tin Can Linux                   |   _____ _           ___            
+|---------------------------------|  /__   (_)_ __     / __\__ _ _ __  
+| A tiny Linux distro made from   |    / /\/ | '_ \   / /  / _` | '_ \ 
+| scraps I found on the internet. |   / /  | | | | | / /__| (_| | | | |
+|---------------------------------|   \/   |_|_| |_| \____/\__,_|_| |_|
+=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
+
+Tin Can Linux is a tiny linux distribution "made from scraps I found on the
+internet™.
+
+=== Building
+============
+
+Run './bootstrap' to create an initial rootfs. Then, all the packages must be
+rebuilt from inside the chroot. See the website for detailed instructions on
+building Tin Can Linux yourself. (coming soon)
+
+=== Inspiration
+===============
+
+Projects I took inspiration from / resources I used, in no particular order:
+
+- Mussel (https://github.com/firasuke/mussel)
+- StaLi (https://sta.li)
+- Linux from Scratch (https://linuxfromscratch.org)
+- Kiss Linux (https://kisslinux.github.io)
+
+=== Contributing
+================
+
+Issues and pull requests are welcome.

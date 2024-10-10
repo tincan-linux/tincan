@@ -1,0 +1,255 @@
+#!/bin/sh -e
+
+### Configure environment
+set +h
+export ARCROOT=$(pwd)
+export PATH=$(pwd)/toolchain/bin:$PATH
+
+### Build cross-compiler using mussel
+cd mussel
+./mussel x86_64 l p
+mv toolchain ../
+cd ..
+
+### Use the newly built toolchain
+PREFIX=x86_64-linux-musl
+export CC=$PREFIX-gcc
+export CXX=$PREFIX-g++
+export AR=$PREFIX-ar
+export AS=$PREFIX-as
+export LD=$PREFIX-ld
+export RANLIB=$PREFIX-ranlib
+export READELF=$PREFIX-readelf
+export STRIP=$PREFIX-strip
+
+### Create sysroot
+mkdir -pv sysroot/{bin,boot,dev,etc,home,lib/{firmware,modules}}
+mkdir -pv sysroot/{opt,proc,sys,tmp}
+mkdir -pv sysroot/var/{cache,lib,local,lock,log,mnt,opt,run,spool}
+install -dv -m 0750 sysroot/home/root
+install -dv -m 1777 sysroot/{var/,}tmp
+
+ln -svf . $ARCROOT/sysroot/usr
+ln -svf ../proc/mounts $ARCROOT/sysroot/etc/mtab
+
+cat > sysroot/etc/passwd << "EOF"
+root::0:0:root:/root:/bin/ash
+EOF
+
+cat > sysroot/etc/group << "EOF"
+root:x:0:
+bin:x:1:
+sys:x:2:
+kmem:x:3:
+tty:x:4:
+tape:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+video:x:12:
+utmp:x:13:
+usb:x:14:
+cdrom:x:15:
+EOF
+
+touch sysroot/var/log/lastlog
+chmod -v 664 sysroot/var/log/lastlog
+
+### Get sources
+mkdir -pv sources
+cd sources
+
+for dir in $(ls $ARCROOT/mussel/sources); do
+    cp $ARCROOT/mussel/sources/$dir/*.tar.* ./
+done
+
+wget -nc https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
+wget -nc https://www.busybox.net/downloads/busybox-1.36.1.tar.bz2
+wget -nc https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.xz
+wget -nc https://github.com/avs-origami/arc/archive/refs/heads/main.tar.gz
+
+### Linux
+tar xf linux-6.5.3.tar.xz
+cd linux-6.5.3
+
+make mrproper
+make headers
+
+find usr/include -type f ! -name '*.h' -delete
+cp -r usr/include $ARCROOT/sysroot/
+
+cd $ARCROOT/sources
+
+### Musl
+tar xf musl-1.2.5.tar.gz
+cd musl-1.2.5
+
+./configure \
+    CROSS_COMPILE=$PREFIX- \
+    --prefix="" \
+    --disable-static \
+    --target=$PREFIX
+
+make
+make DESTDIR=$ARCROOT/sysroot install
+
+cd $ARCROOT/sources
+
+### M4
+tar xf m4-1.4.19.tar.xz
+cd m4-1.4.19
+
+./configure --prefix=""
+make
+make DESTDIR=$ARCROOT/sysroot install
+
+cd $ARCROOT/sources
+
+### Pkgconf
+# tar xf pkgconf-2.1.0.tar.xz
+# cd pkgconf-2.1.0
+# 
+# ./configure \
+#     --prefix="" \
+#     --disable-static
+# 
+# make
+# make DESTDIR=$ARCROOT/sysroot install
+#
+# ln -sv /bin/pkgconf $ARCROOT/sysroot/bin/pkg-config
+#
+# cd $ARCROOT/sources
+#
+### Binutils
+tar xf binutils-2.42.tar.xz
+cd binutils-2.42
+
+mkdir -pv build
+cd build
+
+../configure \
+    --prefix="" \
+    --exec-prefix="" \
+    --sbindir=/bin \
+    --libexecdir=/lib \
+    --with-lib-path=/lib \
+    --build=x86_64 \
+    --host=$PREFIX \
+    --target=$PREFIX \
+    --with-sysroot=$ARCROOT/sysroot \
+    --enable-deterministic-archives \
+    --enable-gold \
+    --enable-lto \
+    --enable-ld=default \
+    --enable-plugins \
+    --disable-multilib \
+    --disable-werror \
+    --disable-gdb \
+    --disable-nls \
+    --disable-readline \
+    --disable-gprof \
+    --disable-gprofng \
+    --with-mmap \
+    --without-zstd
+
+make
+make DESTDIR=$ARCROOT/sysroot install
+
+cd $ARCROOT/sources
+
+### GCC
+tar xf gcc-13.2.0.tar.xz
+cd gcc-13.2.0
+
+tar xf ../mpfr-4.2.1.tar.xz
+mv -v mpfr-4.2.1 mpfr
+tar xf ../gmp-6.3.0.tar.xz
+mv -v gmp-6.3.0 gmp
+tar xf ../mpc-1.3.1.tar.gz
+mv -v mpc-1.3.1 mpc
+
+sed '/m64=/s/lib64/lib/' gcc/config/i386/t-linux64 > _
+mv -f _ gcc/config/i386/t-linux64
+sed 's/lib64/lib/' gcc/config/i386/linux64.h > _
+mv -f _ gcc/config/i386/linux64.h
+
+mkdir -pv build
+cd build
+
+../configure \
+    --with-sysroot=$ARCROOT/sysroot \
+    --prefix="" \
+    --exec-prefix="" \
+    --sbindir=/bin \
+    --libexecdir=/lib \
+    --mandir=/share/man \
+    --infodir=/share/info \
+    --build=x86_64 \
+    --host=$PREFIX \
+    --target=$PREFIX \
+    --disable-nls \
+    --enable-languages=c,c++ \
+    --enable-c99 \
+    --enable-long-long \
+    --disable-libmudflap \
+    --disable-multilib \
+    --disable-libsanitizer \
+    --with-mpfr-include=$(pwd)/../mpfr/src \
+    --with-mpfr-lib=$(pwd)/mpfr/src/.libs \
+    --disable-werror \
+    --with-arch=x86-64 \
+    --with-tune=generic
+
+make
+make DESTDIR=$ARCROOT/sysroot install
+
+cd $ARCROOT/sources
+
+### Make
+tar xf make-4.4.tar.gz
+cd make-4.4
+
+./configure \
+    --prefix="" \
+    --disable-nls
+
+make
+make DESTDIR=$ARCROOT/sysroot install
+
+cd $ARCROOT/sources
+
+### Busybox
+tar xf busybox-1.36.1.tar.bz2
+cd busybox-1.36.1
+
+make distclean
+make defconfig
+
+sed -i 's/\(CONFIG_\)\(.*\)\(INETD\)\(.*\)=y/# \1\2\3\4 is not set/g' .config
+sed -i 's/\(CONFIG_IFPLUGD\)=y/# \1 is not set/' .config
+sed -i 's/\(CONFIG_FEATURE_WTMP\)=y/# \1 is not set/' .config
+sed -i 's/\(CONFIG_FEATURE_UTMP\)=y/# \1 is not set/' .config
+sed -i 's/\(CONFIG_UDPSVD\)=y/# \1 is not set/' .config
+sed -i 's/\(CONFIG_TCPSVD\)=y/# \1 is not set/' .config
+
+make CROSS_COMPILE=$PREFIX-
+make CROSS_COMPILE=$PREFIX- CONFIG_PREFIX=$ARCROOT/sysroot install
+
+cp -v examples/depmod.pl $ARCROOT/sysroot/bin
+chmod -v 755 $ARCROOT/sysroot/bin/depmod.pl
+
+cd $ARCROOT/sources
+
+### Arc
+tar xf main.tar.gz
+cd arc-main
+
+cargo build --release --target=x86_64-unknown-linux-musl
+cp target/x86_64-unknown-linux-musl/release/arc $ARCROOT/sysroot/bin/arc
+
+cd $ARCROOT/sources
+
+echo "Done!"

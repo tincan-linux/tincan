@@ -1,0 +1,7 @@
+/toolchain
+/sysroot
+/backup
+/sources
+/old
+
+tmp*
