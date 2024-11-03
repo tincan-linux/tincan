@@ -1,0 +1,98 @@
+#!/bin/sh -e
+# Forked from kiss-chroot
+
+log() {
+    printf '\033[32m->\033[m %s.\n' "$*"
+}
+
+die() {
+    log "$*" >&2
+    exit 1
+}
+
+run() {
+    printf '%s\n' "$*"
+    "$@" || return "${_ret:=0}"
+}
+
+clean() {
+    log Unmounting host filesystems; {
+        run umount "$1/dev/shm"
+        run umount "$1/dev/pts"
+        run umount "$1/dev"
+        run umount "$1/proc"
+        run umount "$1/run"
+        run umount "$1/sys/firmware/efi/efivars" 2>/dev/null
+        run umount "$1/sys"
+        run umount "$1/tmp"
+    }
+
+    log Cleaning leftover host files; {
+        run rm -f "$1/etc/resolv.conf"
+    }
+}
+
+mounted() {
+    # This is a pure shell mountpoint implementation. We're dealing
+    # with basic (and fixed/known) input so this doesn't need to
+    # handle more complex cases.
+    [ -e "$1" ]         || return 1
+    [ -e /proc/mounts ] || return 1
+
+    while read -r _ target _; do
+        [ "$target" = "$1" ] && return 0
+    done < /proc/mounts
+
+    return 1
+}
+
+mmount() {
+    dest=$1
+    shift
+    mounted "$dest" || run mount "$@" "$dest"
+}
+
+main() {
+    # Ensure input does not end in '/'.
+    set -- "${1%"${1##*[!/]}"}"
+
+    [ "$1" ]           || die Need a path to the chroot
+    [ -d "$1" ]        || die Given path does not exist
+    [ "$(id -u)" = 0 ] || die Script needs to be run as root
+
+    trap 'clean "${1%"${1##*[!/]}"}"' EXIT INT
+
+    log Mounting host filesystems; {
+        mmount "$1/dev"     -o bind  /dev
+        mmount "$1/dev/pts" -o bind /dev/pts
+        mmount "$1/dev/shm" -t tmpfs shmfs
+        mmount "$1/proc"    -t proc  proc
+        mmount "$1/run"     -t tmpfs tmpfs
+        mmount "$1/sys"     -t sysfs sys
+        mmount "$1/sys/firmware/efi/efivars" -t efivarfs efivarfs 2>/dev/null
+        mmount "$1/tmp"     -o mode=1777,nosuid,nodev -t tmpfs tmpfs
+    }
+
+    log Copying /etc/resolv.conf from host; {
+        run cp -f /etc/resolv.conf "$1/etc"
+    }
+
+    log Entering chroot; {
+        _ret=1
+
+        run chroot "$1" /bin/env -i \
+            HOME=/home/root \
+            TERM="$TERM" \
+            SHELL=/bin/sh \
+            USER=root \
+            LOGNAME=root \
+            PATH=$PATH:/lib/gcc/x86_64-pc-linux-musl/14.2.0 \
+            CFLAGS="${CFLAGS:--march=x86-64 -mtune=generic -pipe -O2}" \
+            CXXFLAGS="${CXXFLAGS:--march=x86-64 -mtune=generic -pipe -O2}" \
+            MAKEFLAGS="${MAKEFLAGS:--j$(nproc 2>/dev/null || echo 1)}" \
+            ARC_PATH=/var/repo/core:/var/repo/extra:/var/repo/xorg \
+            /bin/sh -l
+    }
+}
+
+main "$1"
