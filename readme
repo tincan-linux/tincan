@@ -6,15 +6,18 @@
 |---------------------------------|   \/   |_|_| |_| \____/\__,_|_| |_|
 =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=
 
-Tin Can Linux is a tiny linux distribution "made from scraps I found on the
+Tin Can Linux is a tiny linux distribution made from scraps I found on the
 internet™.
 
 === Building
 ============
 
-Run './bootstrap' to create an initial rootfs. Then, all the packages must be
-rebuilt from inside the chroot. See the website for detailed instructions on
-building Tin Can Linux yourself. (coming soon)
+1. Clone this repo with the '--recurse-submodules' option.
+2. Run './bootstrap' to create an initial rootfs.
+3. Chroot into 'sysroot' and rebuild all pacakges.
+
+See the website for detailed instructions on building Tin Can Linux yourself.
+(coming soon)
 
 === Inspiration
 ===============
