@@ -16,8 +16,8 @@ internet™.
 2. Run './bootstrap' to create an initial rootfs.
 3. Chroot into 'sysroot' and rebuild all pacakges.
 
-See the website for detailed instructions on building Tin Can Linux yourself.
-(coming soon)
+For detailed instructions, see the website at 
+https://tincan-linux.github.io/install/hard
 
 === Inspiration
 ===============
