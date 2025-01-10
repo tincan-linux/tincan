@@ -7,6 +7,7 @@ export PATH=$(pwd)/toolchain/bin:$PATH
 
 ### Build cross-compiler using mussel
 cd mussel
+./check
 ./mussel x86_64 l p
 mv toolchain ../
 cd ..
@@ -249,6 +250,7 @@ cd arc-main
 
 cargo build --release --target=x86_64-unknown-linux-musl
 cp target/x86_64-unknown-linux-musl/release/arc $ARCROOT/sysroot/bin/arc
+cp arc.toml $ARCROOT/sysroot/etc/arc.toml
 
 cd $ARCROOT/sources
 
