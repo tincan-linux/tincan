@@ -1,0 +1,7 @@
+#!/bin/sh
+
+./mussel/clean
+
+rm -rf sources
+rm -rf sysroot
+rm -rf toolchain
