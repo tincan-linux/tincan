@@ -4,6 +4,7 @@
 set +h
 export ARCROOT=$(pwd)
 export PATH=$(pwd)/toolchain/bin:$PATH
+export MAKEFLAGS="-j$(nproc)"
 
 ### Build cross-compiler using mussel
 cd mussel
