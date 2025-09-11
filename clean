@@ -1,6 +1,7 @@
 #!/bin/sh
 
-./mussel/clean
+./mussel/mussel --clean
+rm -rf mussel/sources
 
 rm -rf sources
 rm -rf sysroot

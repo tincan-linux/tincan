@@ -14,7 +14,6 @@ log_noline() {
 
 panic() {
     log 1 "$1"
-    /bin/sh
 }
 
 ./mussel/check
