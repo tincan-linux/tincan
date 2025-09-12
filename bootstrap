@@ -75,6 +75,7 @@ wget -nc https://www.busybox.net/downloads/busybox-1.36.1.tar.bz2
 wget -nc https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.xz
 wget -nc https://github.com/avs-origami/arc/archive/refs/heads/main.tar.gz
 wget -nc -O config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+wget -nc https://curl.se/ca/cacert-2025-05-20.pem
 
 ### Linux
 tar xf linux-6.13.7.tar.xz
@@ -263,5 +264,9 @@ cp target/x86_64-unknown-linux-musl/release/arc $ARCROOT/sysroot/bin/arc
 cp arc.toml $ARCROOT/sysroot/etc/arc.toml
 
 cd $ARCROOT/sources
+
+### SSL Certs
+mkdir -pv $ARCROOT/sysroot/etc/ssl
+cp cacert-2025-05-20.pem $ARCROOT/sysroot/etc/ssl/cert.pem
 
 echo "Done!"
