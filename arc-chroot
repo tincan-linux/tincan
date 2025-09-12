@@ -17,14 +17,14 @@ run() {
 
 clean() {
     log Unmounting host filesystems; {
-        run umount "$1/dev/shm"
-        run umount "$1/dev/pts"
-        run umount "$1/dev"
-        run umount "$1/proc"
-        run umount "$1/run"
-        run umount "$1/sys/firmware/efi/efivars" 2>/dev/null
-        run umount "$1/sys"
-        run umount "$1/tmp"
+        run umount "$1/dev/shm" || "/dev/shm not unmounted"
+        run umount "$1/dev/pts" || "/dev/pts not unmounted"
+        run umount "$1/dev" || "/dev not unmounted"
+        run umount "$1/proc" || log "/proc not unmounted"
+        run umount "$1/run" || log "/run not unmounted"
+        run umount "$1/sys/firmware/efi/efivars" || log "/sys/firmware/efi/efivars not unmounted"
+        run umount "$1/sys" || log "/sys not unmounted"
+        run umount "$1/tmp" || log "/tmp not unmounted"
     }
 
     log Cleaning leftover host files; {
