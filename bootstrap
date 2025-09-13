@@ -73,7 +73,7 @@ done
 wget -nc https://ftp.gnu.org/gnu/make/make-4.4.tar.gz
 wget -nc https://www.busybox.net/downloads/busybox-1.36.1.tar.bz2
 wget -nc https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.xz
-wget -nc https://github.com/avs-origami/arc/archive/refs/heads/main.tar.gz
+wget -nc https://github.com/avs-origami/moss/archive/refs/heads/main.tar.gz
 wget -nc -O config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
 wget -nc https://curl.se/ca/cacert-2025-05-20.pem
 
@@ -257,11 +257,11 @@ cd $ARCROOT/sources
 
 ### Arc
 tar xf main.tar.gz
-cd arc-main
+cd moss-main
 
 cargo build --release --target=x86_64-unknown-linux-musl
-cp target/x86_64-unknown-linux-musl/release/arc $ARCROOT/sysroot/bin/arc
-cp arc.toml $ARCROOT/sysroot/etc/arc.toml
+cp target/x86_64-unknown-linux-musl/release/moss $ARCROOT/sysroot/bin/moss
+cp moss.toml $ARCROOT/sysroot/etc/moss.toml
 
 cd $ARCROOT/sources
 
