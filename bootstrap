@@ -28,8 +28,8 @@ export STRIP=$PREFIX-strip
 
 ### Create sysroot
 mkdir -pv sysroot/{bin,boot,dev,etc,home,lib/{firmware,modules}}
-mkdir -pv sysroot/{opt,proc,sys,tmp}
-mkdir -pv sysroot/var/{cache,lib,local,lock,log,mnt,opt,run,spool}
+mkdir -pv sysroot/{mnt,opt,proc,run,sys,tmp}
+mkdir -pv sysroot/var/{cache,lib,local,lock,log,mnt,opt,run,service,spool}
 install -dv -m 0750 sysroot/home/root
 install -dv -m 1777 sysroot/{var/,}tmp
 
